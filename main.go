@@ -2,38 +2,50 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"strings"
 	"time"
+
+	"github.com/harrisoncramer/go-serve-tcp/client"
 )
 
 func main() {
-	arguments := os.Args
-	if len(arguments) == 1 {
-		fmt.Println("Please provide port number")
-		return
+
+	host := flag.String("host", "", "The host (only applicable for clients)")
+	port := flag.String("port", "", "The port on which to run the program")
+
+	flag.Parse()
+
+	if *port == "" {
+		log.Fatal("Must provide port")
 	}
 
-	PORT := ":" + arguments[1]
-	l, err := net.Listen("tcp", PORT)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer l.Close()
+	PORT := ":" + *port
 
-	log.Printf("TCP server listening on port %s", PORT)
+	if *host != "" {
+		client.Run(*host, PORT)
+	} else {
 
-	for {
-		conn, err := l.Accept()
+		l, err := net.Listen("tcp", PORT)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			return
 		}
+		defer l.Close()
 
-		go handleRequest(conn)
+		log.Printf("TCP server listening on port %s", PORT)
+
+		for {
+			conn, err := l.Accept()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			go handleRequest(conn)
+		}
 	}
 
 }

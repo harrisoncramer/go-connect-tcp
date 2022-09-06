@@ -8,15 +8,9 @@ import (
 	"strings"
 )
 
-func main() {
-	arguments := os.Args
-	if len(arguments) == 1 {
-		fmt.Println("Please provide host:port.")
-		return
-	}
+func Run(host string, port string) {
 
-	CONNECT := arguments[1]
-	c, err := net.Dial("tcp", CONNECT)
+	c, err := net.Dial("tcp", host+port)
 	if err != nil {
 		fmt.Println(err)
 		return
