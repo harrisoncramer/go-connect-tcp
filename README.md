@@ -1,4 +1,4 @@
-# go-connect
+# go-connect-tcp
 
 A simple TCP connection between a client and server in Golang.
 
