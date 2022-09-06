@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/harrisoncramer/go-serve-tcp/client"
+	"github.com/harrisoncramer/go-connect-tcp/client"
 )
 
 const p = "13102"
