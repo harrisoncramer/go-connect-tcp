@@ -12,15 +12,18 @@ import (
 	"github.com/harrisoncramer/go-serve-tcp/client"
 )
 
+const p = "13102"
+
 func main() {
 
-	host := flag.String("host", "", "The host (only applicable for clients)")
-	port := flag.String("port", "", "The port on which to run the program")
+	host := flag.String("h", "", "The host (only applicable for clients)")
+	port := flag.String("p", "", "The port on which to run the program")
 
 	flag.Parse()
 
 	if *port == "" {
-		log.Fatal("Must provide port")
+		log.Println("Using default port")
+		*port = p
 	}
 
 	PORT := ":" + *port
