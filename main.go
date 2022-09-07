@@ -58,22 +58,27 @@ func main() {
 				monitor.Fatal(err)
 			}
 
-			go handleRequest(conn, *monitor)
+			go handleRequest(conn, monitor)
 		}
 	}
 
 }
 
-func handleRequest(conn net.Conn, monitor Monitor) {
+func handleRequest(conn net.Conn, monitor *Monitor) {
 
 	for {
 		/* Creates a reader for the data and also writes to the monitor */
-		r := io.TeeReader(conn, &monitor)
+		r := io.TeeReader(conn, monitor)
 		buf := make([]byte, 8192)
 		_, err := r.Read(buf)
 
 		if err != nil {
-			monitor.Fatal(err)
+			if err != io.EOF {
+				monitor.Fatal(err)
+			} else {
+				monitor.Println("Closed connection")
+				return
+			}
 		}
 		if strings.TrimSpace(string(buf)) == "STOP" {
 			monitor.Println("Exiting TCP server!")
