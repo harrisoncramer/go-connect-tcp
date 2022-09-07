@@ -1,11 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -14,15 +15,25 @@ import (
 
 const p = "13102"
 
+type Monitor struct {
+	*log.Logger
+}
+
+func (m *Monitor) Write(p []byte) (int, error) {
+	return len(p), m.Output(2, string(p))
+}
+
 func main() {
 
 	host := flag.String("h", "", "The host (only applicable for clients)")
 	port := flag.String("p", "", "The port on which to run the program")
 
+	monitor := &Monitor{Logger: log.New(os.Stdout, "monitor: ", 0)}
+
 	flag.Parse()
 
 	if *port == "" {
-		log.Println("Using default port")
+		monitor.Println("Using default port")
 		*port = p
 	}
 
@@ -39,35 +50,37 @@ func main() {
 		}
 		defer l.Close()
 
-		log.Printf("TCP server listening on port %s", PORT)
+		monitor.Printf("TCP server listening on port %s", PORT)
 
 		for {
 			conn, err := l.Accept()
 			if err != nil {
-				log.Fatal(err)
+				monitor.Fatal(err)
 			}
 
-			go handleRequest(conn)
+			go handleRequest(conn, *monitor)
 		}
 	}
 
 }
 
-func handleRequest(conn net.Conn) {
+func handleRequest(conn net.Conn, monitor Monitor) {
 
 	for {
-		netData, err := bufio.NewReader(conn).ReadString('\n')
+		/* Creates a reader for the data and also writes to the monitor */
+		r := io.TeeReader(conn, &monitor)
+		buf := make([]byte, 8192)
+		_, err := r.Read(buf)
+
 		if err != nil {
-			fmt.Println(err)
-			return
+			monitor.Fatal(err)
 		}
-		if strings.TrimSpace(string(netData)) == "STOP" {
-			fmt.Println("Exiting TCP server!")
+		if strings.TrimSpace(string(buf)) == "STOP" {
+			monitor.Println("Exiting TCP server!")
 			return
 		}
 
-		/* Here we could plausibly perform some other action or work */
-		fmt.Print(string(netData))
+		/* Here we could plausibly perform some other action or work with the buffer */
 		t := time.Now()
 		myTime := t.Format(time.RFC3339) + "\n"
 		conn.Write([]byte("Server responded at " + myTime))
